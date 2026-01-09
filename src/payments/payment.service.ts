@@ -8,6 +8,7 @@ import { generateTransactionReference, getPastDate } from "src/shared";
 import { BasePaymentProvider } from "src/providers/base.provider";
 import { PaymentRetryQueueProducer } from "src/queues/producers/payment-retry.queue";
 
+const TRANSACTION_RETRY_LIMIT = 3
 
 @Injectable()
 export class PaymentService {
@@ -169,11 +170,15 @@ export class PaymentService {
             throw new ForbiddenException("Cannot retry a transaction currently being processed")
         }
 
+        if (transaction.retryCount == TRANSACTION_RETRY_LIMIT) {
+            throw new ForbiddenException("Transaction retry limit reached")
+        }
+
         await this.paymentService.retryTransfer({ transactionReference: transaction.transactionReference })
 
         await this.prisma.transactions.update({
             where: { id: transactionId },
-            data: { status: "pending" }
+            data: { status: "pending", retryCount: transaction.retryCount + 1 }
         })
     }
 }

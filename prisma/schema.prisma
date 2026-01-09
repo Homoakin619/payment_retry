@@ -33,13 +33,13 @@ model Transactions {
   currency             String
   accountNumber   String
   status               String
+  retryCount      Int @default(0) @map("retry_count")
   transactionReference String @unique @map("transaction_reference")
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
 
   user                 User              @relation(fields: [userId], references: [id])
   logs                 TransactionLogs[]
-  retries              TransactionRetries[]
 
   @@index([userId, createdAt])
   @@index([transactionReference])
@@ -51,16 +51,6 @@ model TransactionLogs {
   status        String
   isRetry       Boolean  @default(false)
   providerResponse Json?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  transaction   Transactions @relation(fields: [transactionId], references: [id])
-}
-
-model TransactionRetries {
-  id            String   @id @default(cuid())
-  transactionId String   @map("transaction_id")
-  retryCount    Int      @default(0)
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
